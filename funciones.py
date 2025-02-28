@@ -6,11 +6,25 @@ import scipy.stats as stats
 import statsmodels.stats.diagnostic as diag
 import statsmodels.api as sm
 
+columnas_a_filtrar = [
+    "MasVnrArea", "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF", "2ndFlrSF",
+    "LowQualFinSF", "WoodDeckSF", "OpenPorchSF", "EnclosedPorch",
+    "3SsnPorch", "ScreenPorch", "PoolArea", "MiscVal"
+]
+
 def prueba_de_normalidad(column, column_name):
-    column = column.dropna()
+    column = column.dropna()  # Eliminar valores NaN
+
+    # Si la columna está en la lista, eliminar los valores 0
+    if column_name in columnas_a_filtrar:
+        column = column[column != 0]
+
+    # Verificar que quedan datos para el análisis
+    if column.empty:
+        print(f"La columna '{column_name}' quedó vacía después de filtrar NaN y/o ceros. No se puede realizar la prueba de normalidad.\n")
+        return
+
     ks_statistic, p_value = stats.kstest(column, 'norm', args=(np.mean(column), np.std(column)))
-    
-    
 
     # Imprimir los resultados
     print(f"Estadístico de prueba (ks_statistic) = {ks_statistic:.20f}")
@@ -18,20 +32,22 @@ def prueba_de_normalidad(column, column_name):
 
     alpha = 0.05
     if p_value < alpha:
-        print(f"Se rechaza la hipótesis nula: los datos de '{column_name}' NO provienen de una distribución normal." + "\n")
+        print(f"Se rechaza la hipótesis nula: los datos de '{column_name}' NO provienen de una distribución normal.\n")
     else:
-        print(f"No se rechaza la hipótesis nula: los datos de '{column_name}' parecen provenir de una distribución normal." + "\n")
+        print(f"No se rechaza la hipótesis nula: los datos de '{column_name}' parecen provenir de una distribución normal.\n")
     
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
     # Graficar histograma
-    axes[0].hist(column)
+    axes[0].hist(column, bins=30, color='skyblue', edgecolor='black', alpha=0.7)
     axes[0].set_title(f'Histograma de {column_name}')
     axes[0].set_xlabel(column_name)
-    axes[0].set_ylabel('Densidad')
+    axes[0].set_ylabel('Frecuencia')
+
     # Graficar boxplot
     axes[1].boxplot(column)
     axes[1].set_title(f'Boxplot de {column_name}')
     axes[1].set_ylabel(column_name)
+
     # Mostrar gráficos
     plt.tight_layout()
     plt.show()
