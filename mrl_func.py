@@ -1,9 +1,14 @@
+import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error,r2_score
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import seaborn as sns
+from sklearn.metrics import mean_squared_error,r2_score
+import sklearn.metrics as metrics
+import scipy.stats as stats
+
 
 def linear_analysis(X,ind_label):
     # Var definition
@@ -58,6 +63,10 @@ def linear_analysis(X,ind_label):
     print(f"Max Predicho: {max_pred_value}")
     print(f"Max Diferencia: {max_difference}")
     
+    # Normalidad residules
+    resid_standardized = (residuales - np.mean(residuales)) / np.std(residuales)
+    stat, p = stats.shapiro(resid_standardized)
+    print(f"Residuales: p = {p:.4f} {'(No Normal)' if p < 0.05 else '(Normal)'}")
     ## Grafico de residules
     plt.figure(figsize=(5,5))
     plt.scatter(ind_t,residuales)
@@ -81,3 +90,31 @@ def linear_analysis(X,ind_label):
     est = sm.OLS(dep, ind)
     est2 = est.fit()
     print(est2.summary())
+    
+def metricas_regresion(X_train, y_test, y_pred, model):
+    def calculate_aic(n, mse, num_params):
+        aic = n * np.log(mse) + 2 * num_params
+        return aic
+        # calculate bic for regression
+    def calculate_bic(n, mse, num_params):
+        bic = n * np.log(mse) + num_params * np.log(n)
+        return bic
+    explained_variance_modelo1=metrics.explained_variance_score(y_test, y_pred)
+    mean_absolute_error_modelo1=metrics.mean_absolute_error(y_test, y_pred) 
+    mse_modelo1=metrics.mean_squared_error(y_test, y_pred) 
+    mean_squared_log_error_modelo1=metrics.mean_squared_log_error(y_test, y_pred)
+    median_absolute_error_modelo1=metrics.median_absolute_error(y_test, y_pred)
+    r2_modelo1=metrics.r2_score(y_test, y_pred)
+    k = model.coef_.size
+    n = X_train.shape[0]
+    aic_modelo1 = calculate_aic(n,mse_modelo1,k)
+    bic_modelo1 = calculate_bic(n,mse_modelo1,k)
+
+    print('explained_variance: ', round(explained_variance_modelo1,4))   
+    print('mean_squared_log_error: ', round(mean_squared_log_error_modelo1,4))
+    print('r2: ', round(r2_modelo1,4))
+    print('MAE: ', round(mean_absolute_error_modelo1,4))
+    print('MSE: ', round(mse_modelo1,4))
+    print('RMSE: ', round(np.sqrt(mse_modelo1),4))
+    print('AIC: ',round(aic_modelo1,4))
+    print('BIC: ',round(bic_modelo1,4))
